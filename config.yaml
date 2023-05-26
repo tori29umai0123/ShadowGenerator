@@ -1,0 +1,5 @@
+base_url: "http://127.0.0.1:7860"
+sd_model: "Secta-v1-1.safetensors"
+cn_model: "control_v11p_sd21_canny [4ac9f628]"
+base_prompt: "(greyscale, monochrome:1.4),"
+negative_prompt: "(low quality, worst quality,sketch:1.4),Mayng,"

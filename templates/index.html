@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Form</title>
+  <style>
+    .container {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: nowrap;
+    }
+    .container > div {
+      flex-basis: 33rem;
+    }
+
+    .preview {
+      margin-top: 10px;
+    }
+    img {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div>
+      <label for="imageUpload">Image Upload:</label><br>
+      <input type="file" id="imageUpload" name="imageUpload"><br>
+      <div id="imagePreview" class="preview"></div>
+    </div>
+
+    <div>
+      <label for="maskUpload">Mask Upload:</label><br>
+      <input type="file" id="maskUpload" name="maskUpload"><br>
+      <div id="maskPreview" class="preview"></div>
+    </div>
+
+    <div>
+      <label>Result:</label><br>
+      <div id="result" class="preview"></div>
+    </div>
+  </div>
+
+  <br>
+
+  <form id="myForm">
+    <label for="prompt">Prompt:</label><input type="button" value="Parse Prompt" onclick="parsePrompt()"><br>
+    <textarea id="prompt" name="prompt" rows="4" cols="50" style="width:1000px"></textarea><br><br>
+
+    <label for="prompt">Max Size:</label><input type="input" value="512" id="maxSizeInput"><br>
+
+    <input type="button" value="Shadow Generate" onclick="submitForm()">
+  </form>
+
+  <script>
+    var maskImage = null;
+    var previewURL = null;
+
+    function parsePrompt() {
+      var promptValue = document.getElementById("prompt").value;
+
+      if (promptValue.trim() !== "") {
+        var confirmed = confirm("現在のPromptは消去されます。よろしいですか");
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      var formData = new FormData();
+      formData.append("image", document.getElementById("imageUpload").files[0]);
+
+      fetch('/parse_prompt', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("prompt").value = data;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    function submitForm() {
+      var imageUpload = document.getElementById("imageUpload").files[0];
+      var maskUpload = document.getElementById("maskUpload").files[0];
+      var promptValue = document.getElementById("prompt").value;
+
+      var formData = new FormData();
+      formData.append("image", imageUpload);
+      formData.append("max_size", document.getElementById("maxSizeInput").value);
+      formData.append("prompt", promptValue);
+
+      if (maskUpload) {
+        // ファイルが選択されていれば、それを送信
+        formData.append("mask", maskUpload);
+      } else if (maskImage) {
+        // ファイルが選択されていない場合、保持した画像を送信
+        formData.append("mask", maskImage);
+      }
+
+      sendRequest(formData);
+    }
+
+    function sendRequest(formData) {
+      fetch('/generate_shadow', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById("result").innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+        }
+        reader.readAsDataURL(blob);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    function showPreview(input, previewId) {
+      var preview = document.getElementById(previewId);
+      var file = input.files[0];
+      var reader = new FileReader();
+      if(previewURL) {
+          URL.revokeObjectURL(previewURL);
+          previewURL = null;
+      }
+      reader.onload = function(e) {
+          var image = new Image();
+          image.src = e.target.result;
+          image.onload = function() {
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            var maxWidth = 2048;
+            var maxHeight = 2048;
+            var aspectRatio = this.width / this.height;
+
+            var newWidth, newHeight;
+            if (aspectRatio > 1) {
+              newWidth = Math.min(this.width, maxWidth);
+              newHeight = newWidth / aspectRatio;
+            } else {
+              newHeight = Math.min(this.height, maxHeight);
+              newWidth = newHeight * aspectRatio;
+            }
+
+            newWidth = Math.floor(newWidth / 16) * 16;
+            newHeight = Math.floor(newHeight / 16) * 16;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            context.drawImage(this, 0, 0, newWidth, newHeight);
+
+            canvas.toBlob(function (blob){
+                previewURL = URL.createObjectURL(blob);
+            	preview.innerHTML = '<img src="' + previewURL + '" alt="Preview">';
+            },'image/webp')
+          };
+      }
+
+      if (file) {
+        reader.readAsDataURL(file);
+      }
+    }
+
+    document.getElementById("imageUpload").addEventListener("change", function() {
+      showPreview(this, "imagePreview");
+
+      var file = this.files[0];
+      var formData = new FormData();
+      formData.append("image", file);
+      formData.append("max_size", document.getElementById("maxSizeInput").value);
+
+      fetch('/generate_mask', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        maskImage = blob;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById("maskPreview").innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+        }
+        reader.readAsDataURL(blob);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+
+    document.getElementById("maskUpload").addEventListener("change", function() {
+      showPreview(this, "maskPreview");
+    });
+  </script>
+</body>
+</html>
