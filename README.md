@@ -1,6 +1,6 @@
 # ShadowGenerator
 AUTOMATIC1111版Stable Diffusion web UIと連携して、ほぼ全自動で線画から陰影をAIに描画させるツール
-![1](https://github.com/tori29umai0123/ShadowGenerator/assets/72191117/850ec25a-f66e-4562-947d-4285f125cd62)
+![1](https://github.com/tori29umai0123/ShadowGenerator/assets/72191117/e19122c1-00c2-4037-a252-1e6cdc0c246f)
 
 # 使い方
 ①AUTOMATIC1111版Stable Diffusion web UIのローカル環境を作る<br>
