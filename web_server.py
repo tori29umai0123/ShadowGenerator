@@ -26,6 +26,7 @@ def generate_shadow():
     mask_file = request.files['mask']
     prompt = request.form['prompt']
     max_size = int(request.form['max_size'])
+
     filename = 'tmp.png'
     maskname = 'mask.png'
 

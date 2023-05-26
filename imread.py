@@ -12,24 +12,20 @@ def imread(filename, flags=cv2.IMREAD_COLOR, dtype=np.uint8):
         print(e)
         return None
 
-#指定したmax_size以下の長辺に収まりつつ画像サイズを16の倍数に丸めるスクリプト
+#指定したmax_size以下の長辺に収めつつアスペクト比を保つスクリプト
 def resize_image(image,max_size):
 
     # 画像のサイズを取得
     height, width, _ = image.shape
 
-    # 縦横のサイズを16の倍数に丸める
-    new_width = round(width / 16) * 16
-    new_height = round(height / 16) * 16
-
-    # アスペクト比を保ちつつ長辺がn以内になるようにリサイズ
+    # アスペクト比を保ちつつ長辺がmax_size以内になるようにリサイズ
     aspect_ratio = width / height
     if aspect_ratio >= 1:
-        if new_width > max_size:
+        if width >height:
             new_width = max_size
             new_height = round(new_width / aspect_ratio)
     else:
-        if new_height > max_size:
+        if height > width:
             new_height = max_size
             new_width = round(new_height * aspect_ratio)
 

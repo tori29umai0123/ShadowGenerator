@@ -19,6 +19,7 @@ class ShadowGenerator:
     def generate_Shadow(self,max_size,output_dir,image_path,mask_path,prompt):
         init_img = imread.imread(image_path)[:, :, ::-1]
         init_retval, init_bytes = cv2.imencode('.png', init_img)
+        old_h, old_w, _ = init_img.shape
         init_img = imread.resize_image(init_img,max_size)
         h, w, _ = init_img.shape
         init_images = base64.b64encode(init_bytes).decode('utf-8')
@@ -65,9 +66,24 @@ class ShadowGenerator:
         r = response.json()
         result = r['images'][0]
         now = datetime.datetime.now()
-        filename = output_dir + "/ouput_" + now.strftime("%Y%m%d_%H%M%S") + ".png"
+        filename = output_dir + "\\ouput_" + now.strftime("%Y%m%d_%H%M%S") + ".png"
         image = Image.open(io.BytesIO(base64.b64decode(result.split(",", 1)[0])))
-        re_img = image.resize((w,h)) 
+
+
+        if w > h:
+            max_size = w
+            new_h = old_h * max_size / old_w
+            re_img = image.resize((w ,int(new_h))) 
+
+        if h > w:
+            max_size = h
+            new_w = old_w * max_size / old_h
+            re_img = image.resize((int(new_w) ,h)) 
+
+        if w == h:
+            max_size = w
+            re_img = image.resize(w ,h) 
+
         re_img.save(filename)
         print(r['info'])
         print("Shadow_Generate done!")
