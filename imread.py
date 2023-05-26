@@ -22,12 +22,18 @@ def resize_image(image,max_size):
     aspect_ratio = width / height
     if aspect_ratio >= 1:
         if width >height:
-            new_width = max_size
-            new_height = round(new_width / aspect_ratio)
+            new_width = max_sizeint()
+            new_height = int(round(new_width / aspect_ratio))
     else:
         if height > width:
             new_height = max_size
             new_width = round(new_height * aspect_ratio)
+
+    if new_width % 2 != 0:
+        new_width = new_width + 1
+
+    if new_height % 2 != 0:
+        new_height = new_height + 1
 
     resized_image = cv2.resize(image, (new_width, new_height))
     return resized_image
