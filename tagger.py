@@ -20,6 +20,7 @@ FILES = ["keras_metadata.pb", "saved_model.pb", "selected_tags.csv"]
 SUB_DIR = "variables"
 SUB_DIR_FILES = ["variables.data-00000-of-00001", "variables.index"]
 CSV_FILE = FILES[-1]
+model = None
 
 def preprocess_image(image):
     image = np.array(image)
@@ -39,13 +40,13 @@ def preprocess_image(image):
     image = image.astype(np.float32)
     return image
 
-def main(image_path):
+def modelLoad():
     # hf_hub_downloadをそのまま使うとsymlink関係で問題があるらしいので、キャッシュディレクトリとforce_filenameを指定してなんとかする
     # depreacatedの警告が出るけどなくなったらその時
     # https://github.com/toriato/stable-diffusion-webui-wd14-tagger/issues/22
 
     model_dir = "wd14_tagger_model"
-    repo_id = "DEFAULT_WD14_TAGGER_REPO"
+    repo_id = DEFAULT_WD14_TAGGER_REPO
 
     if not os.path.exists(model_dir):
         print(f"downloading wd14 tagger model from hf_hub. id: {repo_id}")
@@ -66,9 +67,13 @@ def main(image_path):
     # モデルを読み込む
     model = load_model(model_dir)
 
+    return model
+
+def main(image_path,model):
+
     # label_names = pd.read_csv("2022_0000_0899_6549/selected_tags.csv")
     # 依存ライブラリを増やしたくないので自力で読むよ
-
+    model_dir = "wd14_tagger_model"
     with open(os.path.join(model_dir, CSV_FILE), "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         l = [row for row in reader]
@@ -82,7 +87,7 @@ def main(image_path):
     tag_freq = {}
     undesired_tags = ["monochrome","lineart","greyscale"]
 
-    def run_batch(path_imgs):
+    def run_batch(path_imgs,model):
         imgs = np.array([im for _, im in path_imgs])
         probs = model(imgs, training=False)
         probs = probs.numpy()
@@ -129,8 +134,7 @@ def main(image_path):
         image = image.convert("RGB")
     image = preprocess_image(image)
     b_imgs.append((image_path, image))
-    tag = run_batch(b_imgs)
-    return tag
+    tag = run_batch(b_imgs,model)
     return tag
 
 if __name__ == "__main__":

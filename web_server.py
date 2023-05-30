@@ -5,6 +5,7 @@ import random
 import string
 import tagger
 from flask import Flask, render_template, request, send_file
+model = None
 
 app = Flask(__name__)
 
@@ -46,14 +47,22 @@ def generate_shadow():
 
 @app.route('/parse_prompt', methods=['POST'])
 def parse_prompt():
+    global model  # modelをグローバル変数として宣言する
     image_file = request.files['image']
     filename = 'tmp.png'
 
     # 画像の保存処理
     image_path = save_image(image_file,filename)
 
+    image_file = request.files['image']
+    filename = 'tmp.png'
+
+    # モデルをロードする
+    if model is None:
+        model = tagger.modelLoad()
+
     # 生成したタグをそのまま返す
-    return tagger.main(image_path)
+    return tagger.main(image_path, model)
 
 
 @app.route('/generate_mask', methods=['POST'])
