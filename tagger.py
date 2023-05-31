@@ -41,6 +41,8 @@ def preprocess_image(image):
     return image
 
 def modelLoad():
+    global model  # modelをグローバル変数として宣言する
+
     # hf_hub_downloadをそのまま使うとsymlink関係で問題があるらしいので、キャッシュディレクトリとforce_filenameを指定してなんとかする
     # depreacatedの警告が出るけどなくなったらその時
     # https://github.com/toriato/stable-diffusion-webui-wd14-tagger/issues/22
